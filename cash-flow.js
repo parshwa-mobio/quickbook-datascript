@@ -5,6 +5,7 @@ const pool = require("./db");
 const router = express.Router();
 router.use(bodyParser.json());
 
+// Original Cash Flow Report API (from cash-flow.js)
 router.post("/", async (req, res) => {
   const reportData = req.body;
   const db = await pool.connect();
@@ -107,6 +108,77 @@ router.post("/", async (req, res) => {
     res.status(500).send({ error: "Database insert failed" });
   } finally {
     db.release();
+  }
+});
+
+// Alternative Cash Flow API (from cashflow.js)
+router.post("/cash-flow", async (req, res) => {
+  try {
+    const report = req.body;
+
+    const reportDate =
+      report.Header.Option.find((opt) => opt.Name === "report_date")?.Value ||
+      report.Header.EndPeriod;
+
+    if (!reportDate)
+      return res.status(400).json({ message: "Report date missing" });
+
+    const rows = report.Rows.Row;
+    const insertPromises = [];
+
+    const processRow = (row, section = null) => {
+      // Nested Rows in sections
+      if (row.Rows && row.Rows.Row) {
+        row.Rows.Row.forEach((nestedRow) => processRow(nestedRow, row.Header?.ColData[0]?.value || section));
+      }
+
+      // Normal ColData rows
+      if (row.ColData) {
+        const col = row.ColData;
+        const account_name = col[0]?.value || null;
+        const total = parseFloat(col[1]?.value) || 0;
+
+        if (account_name) {
+          insertPromises.push(
+            pool.query(
+              `INSERT INTO cash_flow (report_date, section, account_name, total)
+               VALUES ($1, $2, $3, $4)
+               ON CONFLICT(report_date, section, account_name)
+               DO UPDATE SET total = EXCLUDED.total`,
+              [reportDate, section, account_name, total]
+            )
+          );
+        }
+      }
+
+      // Summary rows
+      if (row.Summary && row.Summary.ColData) {
+        const col = row.Summary.ColData;
+        const account_name = col[0]?.value || null;
+        const total = parseFloat(col[1]?.value) || 0;
+
+        if (account_name) {
+          insertPromises.push(
+            pool.query(
+              `INSERT INTO cash_flow (report_date, section, account_name, total)
+               VALUES ($1, $2, $3, $4)
+               ON CONFLICT(report_date, section, account_name)
+               DO UPDATE SET total = EXCLUDED.total`,
+              [reportDate, section, account_name, total]
+            )
+          );
+        }
+      }
+    };
+
+    rows.forEach((row) => processRow(row));
+
+    await Promise.all(insertPromises);
+
+    res.json({ message: "Cash Flow saved successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 });
 

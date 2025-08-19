@@ -2,10 +2,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const pool = require("./db");
 
-const app = express();
-app.use(bodyParser.json());
+const router = express.Router();
+router.use(bodyParser.json());
 
-app.post("/save-vendor", async (req, res) => {
+router.post("/save-vendor", async (req, res) => {
   const vendors = req.body;
   const client = await pool.connect();
   try {
@@ -67,7 +67,7 @@ app.post("/save-vendor", async (req, res) => {
   }
 });
 
-app.post("/vendorbybalance", async (req, res) => {
+router.post("/vendorbybalance", async (req, res) => {
   const reportData = req.body;
   const client = await pool.connect();
 
@@ -144,7 +144,7 @@ app.post("/vendorbybalance", async (req, res) => {
   }
 });
 
-app.post("/vendorbalancedetail", async (req, res) => {
+router.post("/vendorbalancedetail", async (req, res) => {
   const reportData = req.body;
   const client = await pool.connect();
 
@@ -243,7 +243,7 @@ app.post("/vendorbalancedetail", async (req, res) => {
   }
 });
 
-app.post("/vendorcredit", async (req, res) => {
+router.post("/vendorcredit", async (req, res) => {
   const creditData = req.body;
   const client = await pool.connect();
 
@@ -355,7 +355,7 @@ app.post("/vendorcredit", async (req, res) => {
   }
 });
 
-app.post("/vendorexpenses", async (req, res) => {
+router.post("/vendorexpenses", async (req, res) => {
   const reportData = req.body;
   const client = await pool.connect();
 
@@ -468,6 +468,4 @@ app.post("/vendorexpenses", async (req, res) => {
   }
 });
 
-app.listen(5000, () => {
-  console.log("Local DB service running on port 5000");
-});
+module.exports = router;

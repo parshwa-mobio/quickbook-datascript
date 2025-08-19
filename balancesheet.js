@@ -1,14 +1,13 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const pool = require("../db");
+const pool = require("./db");
 
 const app = express();
 app.use(bodyParser.json());
 
-app.post("/cash-flow", async (req, res) => {
+app.post("/balance-sheet", async (req, res) => {
   try {
     const report = req.body;
-
     const reportDate =
       report.Header.Option.find((opt) => opt.Name === "report_date")?.Value ||
       report.Header.EndPeriod;
@@ -19,13 +18,14 @@ app.post("/cash-flow", async (req, res) => {
     const rows = report.Rows.Row;
     const insertPromises = [];
 
-    const processRow = (row, section = null) => {
-      // Nested Rows in sections
+    // Recursive function to process nested sections
+    const processRow = (row) => {
+      // Process nested Rows
       if (row.Rows && row.Rows.Row) {
-        row.Rows.Row.forEach((nestedRow) => processRow(nestedRow, row.Header?.ColData[0]?.value || section));
+        row.Rows.Row.forEach((nestedRow) => processRow(nestedRow));
       }
 
-      // Normal ColData rows
+      // Process ColData if exists
       if (row.ColData) {
         const col = row.ColData;
         const account_name = col[0]?.value || null;
@@ -34,17 +34,17 @@ app.post("/cash-flow", async (req, res) => {
         if (account_name) {
           insertPromises.push(
             pool.query(
-              `INSERT INTO cash_flow (report_date, section, account_name, total)
-               VALUES ($1, $2, $3, $4)
-               ON CONFLICT(report_date, section, account_name)
-               DO UPDATE SET total = EXCLUDED.total`,
-              [reportDate, section, account_name, total]
+              `INSERT INTO balance_sheet (report_date, account_name, total)
+                             VALUES ($1, $2, $3)
+                             ON CONFLICT(report_date, account_name) DO UPDATE SET
+                             total = EXCLUDED.total`,
+              [reportDate, account_name, total]
             )
           );
         }
       }
 
-      // Summary rows
+      // Process Summary if exists
       if (row.Summary && row.Summary.ColData) {
         const col = row.Summary.ColData;
         const account_name = col[0]?.value || null;
@@ -53,11 +53,11 @@ app.post("/cash-flow", async (req, res) => {
         if (account_name) {
           insertPromises.push(
             pool.query(
-              `INSERT INTO cash_flow (report_date, section, account_name, total)
-               VALUES ($1, $2, $3, $4)
-               ON CONFLICT(report_date, section, account_name)
-               DO UPDATE SET total = EXCLUDED.total`,
-              [reportDate, section, account_name, total]
+              `INSERT INTO balance_sheet (report_date, account_name, total)
+                             VALUES ($1, $2, $3)
+                             ON CONFLICT(report_date, account_name) DO UPDATE SET
+                             total = EXCLUDED.total`,
+              [reportDate, account_name, total]
             )
           );
         }
@@ -68,13 +68,12 @@ app.post("/cash-flow", async (req, res) => {
 
     await Promise.all(insertPromises);
 
-    res.json({ message: "Cash Flow saved successfully" });
+    res.json({ message: "Balance Sheet saved successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 });
-
 
 app.listen(5000, () => {
   console.log("Local DB service running on port 5000");

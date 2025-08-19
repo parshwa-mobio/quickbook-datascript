@@ -2,10 +2,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const pool = require("./db");
 
-const app = express();
-app.use(bodyParser.json());
+const router = express.Router();
+router.use(bodyParser.json());
 
-app.post("/transfer", async (req, res) => {
+router.post("/transfer", async (req, res) => {
   const transfers = req.body;
   const client = await pool.connect();
   try {
@@ -70,6 +70,4 @@ app.post("/transfer", async (req, res) => {
   }
 });
 
-app.listen(5000, () => {
-  console.log("Transfer service running on port 5000");
-});
+module.exports = router;

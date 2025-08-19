@@ -2,10 +2,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const pool = require("./db");
 
-const app = express();
-app.use(bodyParser.json());
+const router = express.Router();
+router.use(bodyParser.json());
 
-app.post("/trialbalance", async (req, res) => {
+router.post("/trialbalance", async (req, res) => {
   const reportData = req.body;
   console.log(JSON.stringify(reportData));
   const client = await pool.connect();
@@ -307,6 +307,4 @@ app.post("/trialbalance", async (req, res) => {
   }
 });
 
-app.listen(5000, () => {
-  console.log("Trial Balance service running on port 5000");
-});
+module.exports = router;

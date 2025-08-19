@@ -2,11 +2,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const pool = require("./db");
 
-const app = express();
-app.use(bodyParser.json());
+const router = express.Router();
+router.use(bodyParser.json());
 
 // Customer Sales API
-app.post("/customer-sales", async (req, res) => {
+router.post("/customer-sales", async (req, res) => {
   const salesData = req.body;
   const client = await pool.connect();
 
@@ -124,7 +124,7 @@ app.post("/customer-sales", async (req, res) => {
 });
 
 // Class Sales API
-app.post("/class-sales", async (req, res) => {
+router.post("/class-sales", async (req, res) => {
   const salesData = req.body;
   console.log("Received ClassSales data:", JSON.stringify(salesData, null, 2));
   const client = await pool.connect();
@@ -250,7 +250,7 @@ app.post("/class-sales", async (req, res) => {
 });
 
 // Department Sales API
-app.post("/department-sales", async (req, res) => {
+router.post("/department-sales", async (req, res) => {
   const salesData = req.body;
   console.log(
     "Received DepartmentSales data:",
@@ -384,7 +384,7 @@ app.post("/department-sales", async (req, res) => {
 });
 
 // Item Sales API
-app.post("/item-sales", async (req, res) => {
+router.post("/item-sales", async (req, res) => {
   const salesData = req.body;
   console.log(
     "Received ItemSales data:",
@@ -518,7 +518,7 @@ app.post("/item-sales", async (req, res) => {
 });
 
 // Sales Receipt API
-app.post("/sales-receipt", async (req, res) => {
+router.post("/sales-receipt", async (req, res) => {
   const receiptData = req.body;
   console.log(
     "Received SalesReceipt data:",
@@ -622,7 +622,4 @@ app.post("/sales-receipt", async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(5000, () => {
-  console.log("Sales service running on port 5000");
-});
+module.exports = router;

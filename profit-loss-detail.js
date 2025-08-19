@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const pool = require("../db"); // your pg connection pool
+const pool = require("./db"); // your pg connection pool
 
 const app = express();
 app.use(bodyParser.json());

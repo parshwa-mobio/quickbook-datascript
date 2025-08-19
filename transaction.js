@@ -1,11 +1,11 @@
-  const express = require("express");
+const express = require("express");
 const bodyParser = require("body-parser");
 const pool = require("./db");
 
-const app = express();
-app.use(bodyParser.json());
+const router = express.Router();
+router.use(bodyParser.json());
 
-app.post("/transactionlistwithsplits", async (req, res) => {
+router.post("/transactionlistwithsplits", async (req, res) => {
   const reportData = req.body;
   console.log(JSON.stringify(reportData));
   const client = await pool.connect();
@@ -278,7 +278,7 @@ app.post("/transactionlistwithsplits", async (req, res) => {
   }
 });
 
-app.post("/transactionlistbycustomer", async (req, res) => {
+router.post("/transactionlistbycustomer", async (req, res) => {
   const reportData = req.body;
   console.log(JSON.stringify(reportData));
   const client = await pool.connect();
@@ -552,7 +552,7 @@ app.post("/transactionlistbycustomer", async (req, res) => {
   }
 });
 
-app.post("/transactionlistbyvendor", async (req, res) => {
+router.post("/transactionlistbyvendor", async (req, res) => {
   const reportData = req.body;
   console.log(JSON.stringify(reportData));
   const client = await pool.connect();
@@ -826,7 +826,7 @@ app.post("/transactionlistbyvendor", async (req, res) => {
   }
 });
 
-app.post("/transactionlisting", async (req, res) => {
+router.post("/transactionlisting", async (req, res) => {
   const reportData = req.body;
   console.log(JSON.stringify(reportData));
   const client = await pool.connect();
@@ -1059,6 +1059,4 @@ app.post("/transactionlisting", async (req, res) => {
   }
 });
 
-app.listen(5000, () => {
-  console.log("Transaction List with Splits service running on port 5000");
-});
+module.exports = router;
